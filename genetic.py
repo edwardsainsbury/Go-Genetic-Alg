@@ -1,7 +1,7 @@
 import random
 import go
 import itertools
-from multiprocessing.dummy import Pool as ThreadPool
+
 
 class Player:
 
@@ -12,16 +12,12 @@ class Player:
         self.output = output
         self.id = id
         self.numchildren = 0
-
         # Change weights order to work backwards
         if len(weights) == 0:
             weights.append([[round(random.random(),4) for x in range(inputs)] for y in range(height)])
-        # self.weights.append([[1 for x in range(input)] for y in range(height)])
             for x in range(depth - 1):
                 weights.append([[round(random.random(),4)for x in range(height)] for y in range(height)])
-                # self.weights.append([[1 for x in range(height)] for y in range(height)])
             weights.append([[round(random.random(),4)for x in range(height)] for y in range(output)])
-            # self.weights.append([[1 for x in range(height)] for y in range(output)])
         self.weights = weights
 
     def result(self, inputArray):
@@ -37,21 +33,6 @@ class Player:
             nodeOutput.append(outputArray)
         return nodeOutput[-1]
 
-#test = Player(2, 20, 361, 361)
-
-# print(test.weights[0])
-# print(test.weights[1])
-# print(test.weights[2])
-#inputs = []
-#for x in range(361):
-#    inputs.append(1)
-#outputs = test.result(inputs)
-#max = 0
-#for x in range(361):
-#    if outputs[x] > max:
-#        i = x
-#        max = outputs[x]
-#print(i, max)
 
 
 def handler():
@@ -76,18 +57,6 @@ def handler():
 
         matches = list(itertools.permutations(range(len(wins)), 2))
         winner = 1
-        '''
-        firstOpponent = []
-        secondOpponent = []
-        for x in range(len(matches)):
-            firstOpponent.append(arrayOfPlayers[matches[x][0]])
-            secondOpponent.append(arrayOfPlayers[matches[x][1]])
-
-        pool = ThreadPool(8)
-        winner = pool.starmap(go.playgo, zip(firstOpponent, secondOpponent))
-        pool.close()
-        pool.join()
-        '''
         for x in range(len(matches)):
             print('Match:' + str(x+1))
             winner = go.playgo(arrayOfPlayers[matches[x][0]], arrayOfPlayers[matches[x][1]])
@@ -178,77 +147,6 @@ def reproduce(playerone, playertwo):
     else:
         newid = playerone.id[0] + '00' + str(playerone.numchildren) + playertwo.id[0] + '00' + str(playertwo.numchildren)
     return Player(3, 363, 363, 362,newid, allnewweights)
-
-
-
-'''
-    firstMoveInput = []
-    gameWon = 0
-    for x in range(19*19+1):
-        #add 1 as first player flag
-        firstMoveInput.append(1)
-    # Add 0 as pass flag
-    firstMoveInput.append(0)
-    input = firstMoveInput
-    counter = 0
-    while gameWon == 0 and counter < 100:
-        #print('Turn', counter)
-        output, forfeit1, gameWon = turn(playerOne, input, True)
-        output[361] = 0
-        input, forfeit2, gameWon = turn(playerTwo, output, False)
-        input[361] = 1
-        if forfeit1 and forfeit2 is True:
-            gameWon = True
-        counter += 1
-        print(input)
-    print('Game Over')
-'''
-
-
-'''
-def turn(player, input, first):
-    result = player.result(input)
-    numbers = []
-    for x in range(len(result)):
-        numbers.append(x)
-
-    sortedNumbers = [x for y, x in sorted(zip(result, numbers))]
-    sortedResult = [y for y, x in sorted(zip(result, numbers))]
-
-
-    for x in range(361):
-        if sortedNumbers[x] == 362:
-            return input, True, False
-        gameWon, input, legal = moveIsLegal(sortedNumbers[x], input, first)
-        if legal:
-            break
-
-    if legal is True and gameWon is False:
-        return input, False, gameWon
-
-        #check if the next highest value is acceptable
-
-def moveIsLegal(i, input, first):
-    #legal move
-    #cant move, already piece there
-    #cant lay piece as would be taken
-    #has taken other players piece
-
-
-
-    #moves are exhasuted add points to deterine winner
-
-
-    if input[i] == 1:
-        if first:
-            input[i] = 2
-        else:
-            input[i] = 0
-        return False, input, True
-    else:
-        return False, input, False
-'''
-
 
 
 handler()
