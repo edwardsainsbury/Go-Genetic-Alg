@@ -664,13 +664,13 @@ def playgo(playerone, playertwo):
         o_points = x_points
     if o_points > x_points:
         print('o wins')
-        return 2
+        return 2, counter
     elif x_points > o_points:
         print('x wins')
-        return 0
+        return 0, counter
     else:
         print('tie')
-        return 1
+        return 1, counter
 
 
 ## Finally something that is not a function!
