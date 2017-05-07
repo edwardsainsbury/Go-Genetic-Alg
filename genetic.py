@@ -7,7 +7,7 @@ from datetime import datetime
 #player class
 class Player:
 
-    def __init__(self, depth, height, inputs, output, id, weights,parentone,parenttwo):
+    def __init__(self, depth, height, inputs, output, id, weights, parentone, parenttwo):
         self.depth = depth
         self.height = height
         self.input = inputs
@@ -18,10 +18,10 @@ class Player:
         self.parenttwo = parenttwo
         # Change weights order to work backwards
         if len(weights) == 0:
-            weights.append([[round(random.random(),4) for x in range(inputs)] for y in range(height)])
+            weights.append([[round(random.random(), 4) for _ in range(inputs)] for _ in range(height)])
             for x in range(depth - 1):
-                weights.append([[round(random.random(),4)for x in range(height)] for y in range(height)])
-            weights.append([[round(random.random(),4)for x in range(height)] for y in range(output)])
+                weights.append([[round(random.random(), 4)for _ in range(height)] for _ in range(height)])
+            weights.append([[round(random.random(), 4)for _ in range(height)] for _ in range(output)])
         self.weights = weights
 
     def result(self, inputArray):
@@ -48,15 +48,16 @@ def handler():
     else:
         arrayOfPlayers, numberOfPlayersCreated, startEra = startNew(numberOfPlayersPerRound)
 
-    for i in range(startEra, 1, numberOfEra):
+    for i in range(startEra, numberOfEra, 1):
         print('Era: ' + str(i+1))
         wins = []
+
         for x in range(numberOfPlayersPerRound):
             wins.append(0)
 
         matches = list(itertools.permutations(range(numberOfPlayersPerRound), 2))
-        winner = 2
         cnx = mysql.connector.connect(user='root', password='mysql', host='127.0.0.1', database='test')
+
         for x in range(len(matches)):
             print('Match:' + str(x+1))
             winner, moves = go.playgo(arrayOfPlayers[matches[x][0]], arrayOfPlayers[matches[x][1]])
@@ -71,6 +72,7 @@ def handler():
                 arrayOfPlayers[matches[x][1]].id, winner == 2 or winner == 1, winner == 1, str(moves))
             cnx.cursor().execute(add_match, data_match)
             cnx.commit()
+
         cnx.close()
         print(wins)
         runningScores.append(wins)
@@ -95,15 +97,14 @@ def handler():
                              "  `layer_three_weights` mediumtext NOT NULL,"
                              "  PRIMARY KEY (`timestamp`)"
                              ") ENGINE=InnoDB")
+
         for x in range(0, int(len(wins)/4), 2):
-            newPlayers.append(reproduce(arrayOfPlayers[sortedNumbers[x]], arrayOfPlayers[sortedNumbers[x+1]],numberOfPlayersCreated))
-            insertPlayer(newPlayers[0], newPlayers[0].parentone, newPlayers[0].parenttwo)
+            newPlayers.append(reproduce(arrayOfPlayers[sortedNumbers[x]], arrayOfPlayers[sortedNumbers[x+1]], numberOfPlayersCreated))
             newPlayers.append(Player(3, 363, 363, 362, numberOfPlayersCreated+2, [], 999, 999))
-            insertPlayer(newPlayers[1], newPlayers[0].parentone, newPlayers[0].parenttwo)
             newPlayers.append(arrayOfPlayers[sortedNumbers[x]])
-            insertPlayer(newPlayers[2], newPlayers[0].parentone, newPlayers[0].parenttwo)
             newPlayers.append(arrayOfPlayers[sortedNumbers[x+1]])
-            insertPlayer(newPlayers[3], newPlayers[0].parentone, newPlayers[0].parenttwo)
+            for player in newPlayers:
+                insertPlayer(player)
             numberOfPlayersCreated += 2
         arrayOfPlayers = newPlayers
 
@@ -111,7 +112,7 @@ def handler():
 def reproduce(playerone, playertwo, numberOfPlayers):
     playeroneweights = []
     playertwoweights = []
-    newweights = []
+
     for x in range(len(playerone.weights)):
         playeroneweights.append(playerone.weights[x])
         playertwoweights.append(playertwo.weights[x])
@@ -125,14 +126,14 @@ def reproduce(playerone, playertwo, numberOfPlayers):
                     newweights.append(playertwo.weights[x][y][z])
                 else:
                     newweights.append(playerone.weights[x][y][z])
-                if random.random() < 1 /(len(playertwoweights)*len(playertwoweights[x])*len(playertwo.weights[x][y])) :
-                    newweights[-1] = round(random.random(),4)
+                if random.random() < 1 / (len(playertwoweights)*len(playertwoweights[x])*len(playertwo.weights[x][y])):
+                    newweights[-1] = round(random.random(), 4)
             newnewweights.append(newweights)
         allnewweights.append(newnewweights)
 
     playerone.numchildren += 1
     playertwo.numchildren += 1
-    return Player(3, 363, 363, 362,numberOfPlayers+1, allnewweights, playerone.id, playertwo.id)
+    return Player(3, 363, 363, 362, numberOfPlayers+1, allnewweights, playerone.id, playertwo.id)
 
 #load players at end of most recent era
 def load():
@@ -157,10 +158,9 @@ def load():
 def startNew(numberOfPlayersPerRound):
     cnx = mysql.connector.connect(user='root', password='mysql', host='127.0.0.1', database='test')
     arrayOfPlayers = []
-    numberOfPlayersCreated = numberOfPlayersPerRound
     cnx.cursor().execute("DROP TABLE if exists `matches`")
     cnx.cursor().execute("CREATE TABLE `matches` ("
-                         "  `timestamp` time(2) NOT NULL, "
+                         "  `timestamp` time(6) NOT NULL, "
                          "  `era_no` int(3) NOT NULL ,"
                          "  `match_no` int(2) NOT NULL,"
                          "  `player_one_id` int(3) NOT NULL,"
@@ -184,21 +184,20 @@ def startNew(numberOfPlayersPerRound):
     cnx.close()
     for x in range(numberOfPlayersPerRound):
         arrayOfPlayers.append(Player(3, 363, 363, 362, str(x + 1), [], 999, 999))
-        insertPlayer(arrayOfPlayers[x], arrayOfPlayers[x].parentone, arrayOfPlayers[x].parenttwo)
+        insertPlayer(arrayOfPlayers[x])
 
     return arrayOfPlayers, numberOfPlayersPerRound, 0
 
-#Function that insserts new player into database
-def insertPlayer(player, parent_one_id, parent_two_id):
+#Function that inserts new player into database
+def insertPlayer(player):
     cnx = mysql.connector.connect(user='root', password='mysql', host='127.0.0.1', database='test')
     add_player = ("INSERT INTO `players`"
                   "(timestamp, player_id, parent_one_id, parent_two_id, layer_one_weights, layer_two_weights, layer_three_weights)"
                   "VALUES (%s, %s, %s, %s, %s, %s, %s)")
-    data_player = (str(datetime.now()), str(player.id), str(parent_one_id), str(parent_two_id), str(player.weights[0]),
+    data_player = (str(datetime.now()), str(player.id), str(player.parentone), str(player.parenttwo), str(player.weights[0]),
                    str(player.weights[1]), str(player.weights[2]))
     cnx.cursor().execute(add_player, data_player)
     cnx.commit()
     cnx.close()
 
 handler()
-
