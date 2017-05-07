@@ -15,7 +15,7 @@ class Player:
         self.height = height
         self.input = inputs
         self.output = output
-        self.id = id.rjust(3,'0')
+        self.id = id
         self.numchildren = 0
         # Change weights order to work backwards
         if len(weights) == 0:
@@ -73,11 +73,11 @@ def handler():
     for i in range(numberOfEra):
         print('Era: ' + str(i+1))
         wins = []
-        for x in range(numberOfPlayersCreated):
+        for x in range(numberOfPlayersPerRound):
             wins.append(0)
 
 
-        matches = list(itertools.permutations(range(len(wins)), 2))
+        matches = list(itertools.permutations(range(numberOfPlayersPerRound), 2))
         winner = 2
         for x in range(len(matches)):
             print('Match:' + str(x+1))
@@ -95,7 +95,7 @@ def handler():
              #   data_turn = (str(i + 1).rjust(3,'0'), str(x).rjust(2,'0'), arrayOfPlayers[matches[x][0]].id,
               #              arrayOfPlayers[matches[x][1]].id, False, False)
                 wins[matches[x][1]] += 1
-            data_match = (str(datetime.now()) ,str(i + 1).rjust(3, '0'), str(x).rjust(2, '0'), arrayOfPlayers[matches[x][0]].id,
+            data_match = (str(datetime.now()) ,str(i + 1).rjust(3, '0'), str(x+1).rjust(2, '0'), arrayOfPlayers[matches[x][0]].id,
                 arrayOfPlayers[matches[x][1]].id, winner == 2 or winner == 1, winner == 1, str(moves))
             cnx.cursor().execute(add_match, data_match)
             cnx.commit()
@@ -122,7 +122,7 @@ def handler():
 
         for x in range(0, int(len(wins)/4), 2):
 
-            newPlayers.append(reproduce(arrayOfPlayers[sortedNumbers[x]], arrayOfPlayers[sortedNumbers[x+1]]),numberOfPlayersCreated)
+            newPlayers.append(reproduce(arrayOfPlayers[sortedNumbers[x]], arrayOfPlayers[sortedNumbers[x+1]],numberOfPlayersCreated))
             newPlayers.append(Player(3, 363, 363, 362, numberOfPlayersCreated+2, []))
             newPlayers.append(arrayOfPlayers[sortedNumbers[x]])
             newPlayers.append(arrayOfPlayers[sortedNumbers[x+1]])
@@ -167,6 +167,104 @@ def reproduce(playerone, playertwo, numberOfPlayers):
     playerone.numchildren += 1
     playertwo.numchildren += 1
     return Player(3, 363, 363, 362,numberOfPlayers+1, allnewweights)
+
+
+
+def load():
+    numberOfEra = 100
+    arrayOfPlayers = []
+    runningScores = []
+
+    #need a query that finds the highest id number in the players table
+    #numberOfPlayersCreated = numberOfPlayersPerRound?
+    cnx = mysql.connector.connect(user='root', password='mysql',
+                                  host='127.0.0.1',
+                                  database='test')
+    #need a query that returns the current era from the matches table
+#    currentEra =
+    #need a query that returns the latest match
+#    completedMatches =
+
+    #load players from players table
+    #need query to return weights for each platyer
+    #need to shape weights into the right order and shape
+#    weights =
+    for x in range(numberOfPlayersPerRound):
+        arrayOfPlayers.append(Player(3, 363, 363, 362, str(x), []))
+
+
+    for i in range(currentEra,1,numberOfEra):
+        print('Era: ' + str(i+1))
+        wins = []
+        for x in range(numberOfPlayersCreated):
+            wins.append(0)
+
+
+        matches = list(itertools.permutations(range(len(wins)), 2))
+        winner = 2
+        for x in range(completedMatches,1,len(matches)):
+            print('Match:' + str(x+1))
+            winner, moves = go.playgo(arrayOfPlayers[matches[x][0]], arrayOfPlayers[matches[x][1]])
+            add_match = ("INSERT INTO `matches`"
+                        "(timestamp, era_no, turn_no, player_one_id, player_two_id, player_one_winner, draw, no_moves) "
+                        "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)")
+            if winner == 2:
+             #   data_turn = (str(i+1).rjust(3,'0'),str(x).rjust(2,'0'),arrayOfPlayers[matches[x][0]].id,
+              #              arrayOfPlayers[matches[x][1]].id,True,False)
+                wins[matches[x][0]] += 1
+            #elif winner == 1:
+
+            elif winner == 0:
+             #   data_turn = (str(i + 1).rjust(3,'0'), str(x).rjust(2,'0'), arrayOfPlayers[matches[x][0]].id,
+              #              arrayOfPlayers[matches[x][1]].id, False, False)
+                wins[matches[x][1]] += 1
+            data_match = (str(datetime.now()) ,str(i + 1).rjust(3, '0'), str(x+1).rjust(2, '0'), arrayOfPlayers[matches[x][0]].id,
+                arrayOfPlayers[matches[x][1]].id, winner == 2 or winner == 1, winner == 1, str(moves))
+            cnx.cursor().execute(add_match, data_match)
+            cnx.commit()
+        print(wins)
+        runningScores.append(wins)
+        numbers = []
+        playerids = []
+        for x in range(len(wins)):
+            numbers.append(x)
+            playerids.append(arrayOfPlayers[x].id)
+        '''
+        with open('record.txt', 'a+') as f:
+            for item in wins:
+                f.write("%s " % item)
+            f.write('\n')
+            for item in playerids:
+                f.write("%s " % item)
+            f.write('\n')
+        '''
+        sortedNumbers = [x for y, x in sorted(set(zip(wins, numbers)), reverse=True)]
+        newPlayers = []
+        d = open('weights.txt', 'w')
+        d.close()
+
+        for x in range(0, int(len(wins)/4), 2):
+
+            newPlayers.append(reproduce(arrayOfPlayers[sortedNumbers[x]], arrayOfPlayers[sortedNumbers[x+1]],numberOfPlayersCreated))
+            newPlayers.append(Player(3, 363, 363, 362, numberOfPlayersCreated+2, []))
+            newPlayers.append(arrayOfPlayers[sortedNumbers[x]])
+            newPlayers.append(arrayOfPlayers[sortedNumbers[x+1]])
+            numberOfPlayersCreated += 2
+            with open('weights.txt', 'a+') as d:
+                for item in arrayOfPlayers[sortedNumbers[x]].weights:
+                    for seconditem in item:
+                        for thirditem in seconditem:
+                            d.write("%s " % thirditem)
+                d.write('\n')
+                for item in arrayOfPlayers[sortedNumbers[x+1]].weights:
+                    for seconditem in item:
+                        for thirditem in seconditem:
+                            d.write("%s " % thirditem)
+                d.write('\n')
+        arrayOfPlayers = newPlayers
+
+
+
 
 
 handler()
