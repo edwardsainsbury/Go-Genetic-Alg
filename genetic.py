@@ -3,6 +3,7 @@ import go
 import itertools
 import mysql.connector
 from datetime import datetime
+import ast
 
 #player class
 class Player:
@@ -42,7 +43,7 @@ def handler():
     numberOfEra = 100
     runningScores = []
     numberOfPlayersPerRound = 4
-    do_load = 0
+    do_load = 1
     if do_load:
         arrayOfPlayers, numberOfPlayersCreated, startEra = load()
     else:
@@ -92,9 +93,10 @@ def handler():
                              "  `player_id` int(3) NOT NULL,"
                              "  `parent_one_id` int(3) NOT NULL,"
                              "  `parent_two_id` int(3) NOT NULL,"
-                             "  `layer_one_weights` mediumtext NOT NULL ,"
-                             "  `layer_two_weights` mediumtext NOT NULL,"
-                             "  `layer_three_weights` mediumtext NOT NULL,"
+                             "  `player_weights_1` mediumtext NOT NULL,"
+                             "  `player_weights_2` mediumtext NOT NULL,"
+                             "  `player_weights_3` mediumtext NOT NULL,"
+                             "  `player_weights_4` mediumtext NOT NULL,"
                              "  PRIMARY KEY (`timestamp`)"
                              ") ENGINE=InnoDB")
 
@@ -138,21 +140,29 @@ def reproduce(playerone, playertwo, numberOfPlayers):
 #load players at end of most recent era
 def load():
     arrayOfPlayers = []
-    #need a query that finds the highest id number in the players table
+
     #numberOfPlayersCreated = numberOfPlayersPerRound?
     cnx = mysql.connector.connect(user='root', password='mysql', host='127.0.0.1', database='test')
+    cursor = cnx.cursor()
     #need a query that returns the current era from the matches table
-#    currentEra =
-    #need a query that returns the latest match
-#    completedMatches =
+    cursor.execute("SELECT MAX(era_no) FROM matches")
+    currentEra = cursor.fetchone()[0]
+    currentEra = 0 if currentEra is None else currentEra
 
+    # need a query that finds the highest id number in the players table
+    cursor.execute("SELECT MAX(player_id) FROM players")
+    numberOfPlayersCreated = cursor.fetchone()[0]
+    #need to delete matches at the srart of the era
+    cursor.execute("DELETE FROM matches WHERE era_no = %s" % currentEra)
+    cnx.commit()
     #load players from players table
-    #need query to return weights for each platyer
-    #need to shape weights into the right order and shape
-#    weights =
-    for x in range(numberOfPlayersPerRound):
-        arrayOfPlayers.append(Player(3, 363, 363, 362, str(x), []))
-    return arrayOfPlayers, numberOfPLayersCreated, startEra
+    cursor.execute("SELECT player_id, parent_one_id, parent_two_id, player_weights_1, "
+                             "player_weights_2, player_weights_3, player_weights_4 FROM players ")
+    playerData = cursor.fetchall()
+    for player in playerData:
+        arrayOfPlayers.append(Player(3, 363, 363, 362, player[0], [ast.literal_eval(player[3]), ast.literal_eval(player[4]), ast.literal_eval(player[5]), ast.literal_eval(player[6])], player[1], player[2]))
+    cnx.close()
+    return arrayOfPlayers, numberOfPlayersCreated, currentEra
 
 #Create new players
 def startNew(numberOfPlayersPerRound):
@@ -176,9 +186,10 @@ def startNew(numberOfPlayersPerRound):
                          "  `player_id` int(3) NOT NULL,"
                          "  `parent_one_id` int(3) NOT NULL,"
                          "  `parent_two_id` int(3) NOT NULL,"
-                         "  `layer_one_weights` mediumtext NOT NULL ,"
-                         "  `layer_two_weights` mediumtext NOT NULL,"
-                         "  `layer_three_weights` mediumtext NOT NULL,"
+                         "  `player_weights_1` mediumtext NOT NULL ,"
+                         "  `player_weights_2` mediumtext NOT NULL,"
+                         "  `player_weights_3` mediumtext NOT NULL,"
+                         "  `player_weights_4` mediumtext NOT NULL,"
                          "  PRIMARY KEY (`timestamp`)"
                          ") ENGINE=InnoDB")
     cnx.close()
@@ -192,10 +203,10 @@ def startNew(numberOfPlayersPerRound):
 def insertPlayer(player):
     cnx = mysql.connector.connect(user='root', password='mysql', host='127.0.0.1', database='test')
     add_player = ("INSERT INTO `players`"
-                  "(timestamp, player_id, parent_one_id, parent_two_id, layer_one_weights, layer_two_weights, layer_three_weights)"
-                  "VALUES (%s, %s, %s, %s, %s, %s, %s)")
+                  "(timestamp, player_id, parent_one_id, parent_two_id, player_weights_1, player_weights_2, player_weights_3, player_weights_4)"
+                  "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)")
     data_player = (str(datetime.now()), str(player.id), str(player.parentone), str(player.parenttwo), str(player.weights[0]),
-                   str(player.weights[1]), str(player.weights[2]))
+                   str(player.weights[1]), str(player.weights[2]), str(player.weights[3]))
     cnx.cursor().execute(add_player, data_player)
     cnx.commit()
     cnx.close()
