@@ -14,7 +14,6 @@ class Player:
         self.input = inputs
         self.output = output
         self.id = id
-        self.numchildren = 0
         self.parentone = parentone
         self.parenttwo = parenttwo
         # Change weights order to work backwards
@@ -132,9 +131,6 @@ def reproduce(playerone, playertwo, numberOfPlayers):
                     newweights[-1] = round(random.random(), 4)
             newnewweights.append(newweights)
         allnewweights.append(newnewweights)
-
-    playerone.numchildren += 1
-    playertwo.numchildren += 1
     return Player(3, 363, 363, 362, numberOfPlayers+1, allnewweights, playerone.id, playertwo.id)
 
 #load players at end of most recent era
