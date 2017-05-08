@@ -39,7 +39,7 @@ class Player:
 # main script to run
 def handler():
     do_load = 0
-    numberOfEra = 100
+    numberOfEra = 1000
     runningScores = []
     numberOfPlayersPerRound = 4
     inUserLoop = True
@@ -99,7 +99,7 @@ def handler():
         cnx = mysql.connector.connect(user='root', password='mysql', host='127.0.0.1', database='test')
         cnx.cursor().execute("DROP TABLE if exists `players`")
         cnx.cursor().execute("CREATE TABLE `players` ("
-                             "  `timestamp` time(2) NOT NULL, "
+                             "  `timestamp` datetime(2) NOT NULL, "
                              "  `player_id` int(3) NOT NULL,"
                              "  `parent_one_id` int(3) NOT NULL,"
                              "  `parent_two_id` int(3) NOT NULL,"
@@ -179,7 +179,7 @@ def startNew(numberOfPlayersPerRound):
     arrayOfPlayers = []
     cnx.cursor().execute("DROP TABLE if exists `matches`")
     cnx.cursor().execute("CREATE TABLE `matches` ("
-                         "  `timestamp` time(6) NOT NULL, "
+                         "  `timestamp` datetime(3) NOT NULL, "
                          "  `era_no` int(3) NOT NULL ,"
                          "  `match_no` int(2) NOT NULL,"
                          "  `player_one_id` int(3) NOT NULL,"
@@ -191,7 +191,7 @@ def startNew(numberOfPlayersPerRound):
                          ") ENGINE=InnoDB")
     cnx.cursor().execute("DROP TABLE if exists `players`")
     cnx.cursor().execute("CREATE TABLE `players` ("
-                         "  `timestamp` time(2) NOT NULL, "
+                         "  `timestamp` datetime(3) NOT NULL, "
                          "  `player_id` int(3) NOT NULL,"
                          "  `parent_one_id` int(3) NOT NULL,"
                          "  `parent_two_id` int(3) NOT NULL,"
@@ -219,6 +219,5 @@ def insertPlayer(player):
     cnx.cursor().execute(add_player, data_player)
     cnx.commit()
     cnx.close()
-
 
 handler()
