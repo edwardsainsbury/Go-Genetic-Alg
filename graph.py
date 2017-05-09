@@ -17,7 +17,6 @@ def graph():
     for x in range(latest_era):
         cursor.execute("SELECT player_one_id, player_two_id, player_one_winner, draw FROM matches WHERE  era_no = %s" % str(x+1))
         data = cursor.fetchall()
-        print('stop;')
         id_array = {}
         for array in data:
             id_array.update({array[0]: 0}) if array[0] not in id_array else id_array
