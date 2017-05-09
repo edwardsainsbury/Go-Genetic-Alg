@@ -153,7 +153,7 @@ def load():
     cursor = cnx.cursor()
     # need a query that returns the current era from the matches table
     cursor.execute("SELECT MAX(era_no) FROM matches")
-    currentEra = cursor.fetchone()[0]
+    currentEra = cursor.fetchone()[0]+1
     currentEra = 0 if currentEra is None else currentEra
 
     # need a query that finds the highest id number in the players table

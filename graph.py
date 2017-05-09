@@ -28,15 +28,20 @@ def graph():
         era_data.append(id_array)
     # Create traces
     trace_array = []
+    trace2_array = []
     for x in range(highest_id):
         values = []
         era = []
+        id_lines = []
         for y in range(len(era_data)):
             if x in era_data[y]:
                 values.append(era_data[y][x])
+                id_lines.append(x)
                 era.append(y)
         trace_array.append(go.Scatter(x=era, y=values, mode='lines+markers', name=str(x)))
-    py.offline.plot(trace_array, filename='line-mode')
+        trace2_array.append(go.Scatter(x=era, y=id_lines, mode='lines+markers', name=str(x)))
+    py.offline.plot(trace_array, filename='EraScores.html')
+    py.offline.plot(trace2_array, filename='PlayerLongevity.html')
     cnx.close()
 
 graph()
