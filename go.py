@@ -397,6 +397,7 @@ def selectmove(xoro, move):
         #print('invalid')
         valid = 0
     #middle
+    '''
     elif x < 18 and y < 18 and x > 0 and y > 0:
         if (gsc[y+1][x] != xoro and gsc[y+1][x] != '-') and (gsc[y][x+1] != xoro and gsc[y][x+1] != '-') and (gsc[y][x-1] != xoro and gsc[y][x-1] != '-') and (gsc[y-1][x] != xoro and gsc[y-1][x] != '-'):
             # print('invalid')
@@ -443,7 +444,7 @@ def selectmove(xoro, move):
             valid = 0
     else:
         hold = 0
-
+    '''
 
     ## Places the piece on the 'future' board, the board
     ## used to test if a move is valid

@@ -7,7 +7,7 @@ import plotly.graph_objs as go
 def graph():
     py.tools.set_credentials_file(username='edwardsainsbury', api_key='oFb4d2SzuUZdkMArQbaB')
 
-    cnx = mysql.connector.connect(user='root', password='mysql', host='127.0.0.1', database='test')
+    cnx = mysql.connector.connect(user='root', password='mysql', host='127.0.0.1', database='test2')
     cursor = cnx.cursor()
     cursor.execute("SELECT MAX(era_no) FROM matches")
     latest_era = cursor.fetchone()[0]

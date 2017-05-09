@@ -67,7 +67,7 @@ def handler():
             wins.append(0)
 
         matches = list(itertools.permutations(range(numberOfPlayersPerRound), 2))
-        cnx = mysql.connector.connect(user='root', password='mysql', host='127.0.0.1', database='test')
+        cnx = mysql.connector.connect(user='root', password='mysql', host='127.0.0.1', database='test2')
 
         for x in range(len(matches)):
             print('Match:' + str(x + 1))
@@ -76,8 +76,11 @@ def handler():
                          "(timestamp, era_no, match_no, player_one_id, player_two_id, player_one_winner, draw, no_moves) "
                          "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)")
             if winner == 2:
-                wins[matches[x][0]] += 1
+                wins[matches[x][0]] += 3
             elif winner == 0:
+                wins[matches[x][1]] += 3
+            elif winner == 1:
+                wins[matches[x][0]] += 1
                 wins[matches[x][1]] += 1
             data_match = (str(datetime.now()), str(i + 1), str(x + 1), arrayOfPlayers[matches[x][0]].id,
                           arrayOfPlayers[matches[x][1]].id, winner == 2 or winner == 1, winner == 1, str(moves))
@@ -96,7 +99,7 @@ def handler():
         sortedNumbers = [x for y, x in sorted(set(zip(wins, numbers)), reverse=True)]
         newPlayers = []
         # Drop table, undecided if this is required
-        cnx = mysql.connector.connect(user='root', password='mysql', host='127.0.0.1', database='test')
+        cnx = mysql.connector.connect(user='root', password='mysql', host='127.0.0.1', database='test2')
         cnx.cursor().execute("DROP TABLE if exists `players`")
         cnx.cursor().execute("CREATE TABLE `players` ("
                              "  `timestamp` datetime(2) NOT NULL, "
@@ -130,6 +133,7 @@ def reproduce(playerone, playertwo, numberOfPlayers):
         playeroneweights.append(playerone.weights[x])
         playertwoweights.append(playertwo.weights[x])
     allnewweights = []
+    #Construct new weights array via crossover
     for x in range(len(playertwoweights)):
         newnewweights = []
         for y in range(len(playertwoweights[x])):
@@ -139,8 +143,8 @@ def reproduce(playerone, playertwo, numberOfPlayers):
                     newweights.append(playertwo.weights[x][y][z])
                 else:
                     newweights.append(playerone.weights[x][y][z])
-                if random.random() < 1 / (
-                                len(playertwoweights) * len(playertwoweights[x]) * len(playertwo.weights[x][y])):
+                #Potentially mutate gene
+                if random.random() < 1 / (len(playertwoweights) * len(playertwoweights[x]) * len(playertwo.weights[x][y])):
                     newweights[-1] = round(random.random(), 4)
             newnewweights.append(newweights)
         allnewweights.append(newnewweights)
@@ -149,7 +153,7 @@ def reproduce(playerone, playertwo, numberOfPlayers):
 # load players at end of most recent era
 def load():
     arrayOfPlayers = []
-    cnx = mysql.connector.connect(user='root', password='mysql', host='127.0.0.1', database='test')
+    cnx = mysql.connector.connect(user='root', password='mysql', host='127.0.0.1', database='test2')
     cursor = cnx.cursor()
     # need a query that returns the current era from the matches table
     cursor.execute("SELECT MAX(era_no) FROM matches")
@@ -175,7 +179,7 @@ def load():
 
 # Create new players
 def startNew(numberOfPlayersPerRound):
-    cnx = mysql.connector.connect(user='root', password='mysql', host='127.0.0.1', database='test')
+    cnx = mysql.connector.connect(user='root', password='mysql', host='127.0.0.1', database='test2')
     arrayOfPlayers = []
     cnx.cursor().execute("DROP TABLE if exists `matches`")
     cnx.cursor().execute("CREATE TABLE `matches` ("
@@ -210,7 +214,7 @@ def startNew(numberOfPlayersPerRound):
 
 # Function that inserts new player into database
 def insertPlayer(player):
-    cnx = mysql.connector.connect(user='root', password='mysql', host='127.0.0.1', database='test')
+    cnx = mysql.connector.connect(user='root', password='mysql', host='127.0.0.1', database='test2')
     add_player = ("INSERT INTO `players`"
                   "(timestamp, player_id, parent_one_id, parent_two_id, player_weights_1, player_weights_2, player_weights_3, player_weights_4)"
                   "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)")
