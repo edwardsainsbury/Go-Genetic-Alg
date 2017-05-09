@@ -11,6 +11,8 @@ go.py is a script found on the internet -
 to play a game of go. I have adapted this script to allow the neural network players to interface with this script. I have added logic to 
 ignore invalid moves and scroll though the players output until a valid move is found.
 
+graph.py is a script that plots out the results of the currently stored data. Current graphs show interesting progression with new generations of players consistently beating their older counterparts.
+
 Current Limitations:
 - With 4 players and two players and two children being carried over to the next generation, result coverages to the point where players 
   are identical except for their single mutation. Could remedy by increasing number of players and including a 'wildcard' each round
