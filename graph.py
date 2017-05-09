@@ -37,7 +37,6 @@ def graph():
                 values.append(era_data[y][x])
                 era.append(y)
         trace_array.append(go.Scatter(x=era, y=values, mode='lines+markers', name=str(x)))
-        print('done')
     py.offline.plot(trace_array, filename='line-mode')
     cnx.close()
 
