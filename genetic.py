@@ -1,5 +1,5 @@
 import random
-import signaltest
+import go
 import itertools
 import mysql.connector
 from datetime import datetime
@@ -39,9 +39,9 @@ class Player:
 # main script to run
 def handler():
     do_load = 0
-    numberOfEra = 10000000
+    numberOfEra = 1000
     runningScores = []
-    numberOfPlayersPerRound = 100
+    numberOfPlayersPerRound = 4
     inUserLoop = True
     while inUserLoop:
         user = input('(N)ew or (L)oad?')
@@ -60,48 +60,48 @@ def handler():
         arrayOfPlayers, numberOfPlayersCreated, startEra = startNew(numberOfPlayersPerRound)
 
     for i in range(startEra, numberOfEra, 1):
-
         print('Era: ' + str(i + 1))
-        winsArray = []
-        playerids = []
-        numbers = []
-        cnx = mysql.connector.connect(user='root', password='mysql', host='127.0.0.1', database='signal')
-        counter = 0
-        for player in arrayOfPlayers:
+        wins = []
 
-            #print('Player:' + str(player.id))
-            wins = signaltest.signalTest(player)
+        for x in range(numberOfPlayersPerRound):
+            wins.append(0)
+
+        matches = list(itertools.permutations(range(numberOfPlayersPerRound), 2))
+        cnx = mysql.connector.connect(user='root', password='mysql', host='127.0.0.1', database='test2')
+
+        for x in range(len(matches)):
+            print('Match:' + str(x + 1))
+            winner, moves = go.playgo(arrayOfPlayers[matches[x][0]], arrayOfPlayers[matches[x][1]])
             add_match = ("INSERT INTO `matches`"
-                         "(timestamp, era_no, player_one_id, score) "
-                         "VALUES (%s, %s, %s, %s)")
-
-            data_match = (str(datetime.now()), str(i + 1), player.id, wins)
+                         "(timestamp, era_no, match_no, player_one_id, player_two_id, player_one_winner, draw, no_moves) "
+                         "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)")
+            if winner == 2:
+                wins[matches[x][0]] += 3
+            elif winner == 0:
+                wins[matches[x][1]] += 3
+            elif winner == 1:
+                wins[matches[x][0]] += 1
+                wins[matches[x][1]] += 1
+            data_match = (str(datetime.now()), str(i + 1), str(x + 1), arrayOfPlayers[matches[x][0]].id,
+                          arrayOfPlayers[matches[x][1]].id, winner == 2 or winner == 1, winner == 1, str(moves))
             cnx.cursor().execute(add_match, data_match)
             cnx.commit()
-            numbers.append(counter)
-            winsArray.append(wins)
-            playerids.append(arrayOfPlayers[counter].id)
-            counter += 1
-            #print(wins)
+
         cnx.close()
+        print(wins)
+        runningScores.append(wins)
+        numbers = []
+        playerids = []
 
-
-
-        sortedNumbers = [x for y, x in sorted(set(zip(winsArray, numbers)), reverse=True)]
-        sortedWinsArray = [x for x in sorted(winsArray, reverse=True)]
-        flag = False
-        for x in sortedWinsArray[:int(len(sortedWinsArray) / 2)]:
-            if x == 8:
-                flag = True
-                break
-        if flag:
-            break
+        for x in range(len(wins)):
+            numbers.append(x)
+            playerids.append(arrayOfPlayers[x].id)
+        sortedNumbers = [x for y, x in sorted(set(zip(wins, numbers)), reverse=True)]
         newPlayers = []
-        # Drop table so that new players can be inserted
-        cnx = mysql.connector.connect(user='root', password='mysql', host='127.0.0.1', database='signal')
+        # Drop table, undecided if this is required
+        cnx = mysql.connector.connect(user='root', password='mysql', host='127.0.0.1', database='test2')
         cnx.cursor().execute("DROP TABLE if exists `players`")
         cnx.cursor().execute("CREATE TABLE `players` ("
-                             "  `id` int AUTO_INCREMENT,"
                              "  `timestamp` datetime(2) NOT NULL, "
                              "  `player_id` int(3) NOT NULL,"
                              "  `parent_one_id` int(3) NOT NULL,"
@@ -110,20 +110,19 @@ def handler():
                              "  `player_weights_2` mediumtext NOT NULL,"
                              "  `player_weights_3` mediumtext NOT NULL,"
                              "  `player_weights_4` mediumtext NOT NULL,"
-                             "  PRIMARY KEY (`id`)"
+                             "  PRIMARY KEY (`timestamp`)"
                              ") ENGINE=InnoDB")
 
-        for x in range(0, int(len(winsArray) / 2), 2):
-            newPlayers.append(reproduce(arrayOfPlayers[sortedNumbers[x]], arrayOfPlayers[sortedNumbers[x + 1]], numberOfPlayersCreated))
-            newPlayers.append(Player(4, 20, 11, 10, numberOfPlayersCreated + 2, [], 999, 999))
+        for x in range(0, int(len(wins) / 4), 2):
+            newPlayers.append(reproduce(arrayOfPlayers[sortedNumbers[x]], arrayOfPlayers[sortedNumbers[x + 1]],
+                                        numberOfPlayersCreated))
+            newPlayers.append(Player(3, 363, 363, 362, numberOfPlayersCreated + 2, [], 999, 999))
             newPlayers.append(arrayOfPlayers[sortedNumbers[x]])
             newPlayers.append(arrayOfPlayers[sortedNumbers[x + 1]])
+            for player in newPlayers:
+                insertPlayer(player)
             numberOfPlayersCreated += 2
-        for player in newPlayers:
-            insertPlayer(player)
         arrayOfPlayers = newPlayers
-        for x in range(9):
-            print(str(x) + ": " + str(winsArray.count(x)))
 
 # Create new players from the best players
 def reproduce(playerone, playertwo, numberOfPlayers):
@@ -149,12 +148,12 @@ def reproduce(playerone, playertwo, numberOfPlayers):
                     newweights[-1] = round(random.random(), 4)
             newnewweights.append(newweights)
         allnewweights.append(newnewweights)
-    return Player(4, 20, 11, 10, numberOfPlayers + 1, allnewweights, playerone.id, playertwo.id)
+    return Player(3, 363, 363, 362, numberOfPlayers + 1, allnewweights, playerone.id, playertwo.id)
 
 # load players at end of most recent era
 def load():
     arrayOfPlayers = []
-    cnx = mysql.connector.connect(user='root', password='mysql', host='127.0.0.1', database='signal')
+    cnx = mysql.connector.connect(user='root', password='mysql', host='127.0.0.1', database='test2')
     cursor = cnx.cursor()
     # need a query that returns the current era from the matches table
     cursor.execute("SELECT MAX(era_no) FROM matches")
@@ -180,16 +179,19 @@ def load():
 
 # Create new players
 def startNew(numberOfPlayersPerRound):
-    cnx = mysql.connector.connect(user='root', password='mysql', host='127.0.0.1', database='signal')
+    cnx = mysql.connector.connect(user='root', password='mysql', host='127.0.0.1', database='test2')
     arrayOfPlayers = []
     cnx.cursor().execute("DROP TABLE if exists `matches`")
     cnx.cursor().execute("CREATE TABLE `matches` ("
-                         "  `id` int(4) AUTO_INCREMENT,"
                          "  `timestamp` datetime(3) NOT NULL, "
                          "  `era_no` int(3) NOT NULL ,"
+                         "  `match_no` int(2) NOT NULL,"
                          "  `player_one_id` int(3) NOT NULL,"
-                         "  `score` int(3) NOT NULL,"
-                         "  PRIMARY KEY (`id`)"
+                         "  `player_two_id` int(3) NOT NULL,"
+                         "  `player_one_winner` bool NOT NULL,"
+                         "  `draw` bool NOT NULL,"
+                         "  `no_moves` int(3) NOT NULL,"
+                         "  PRIMARY KEY (`timestamp`)"
                          ") ENGINE=InnoDB")
     cnx.cursor().execute("DROP TABLE if exists `players`")
     cnx.cursor().execute("CREATE TABLE `players` ("
@@ -205,14 +207,14 @@ def startNew(numberOfPlayersPerRound):
                          ") ENGINE=InnoDB")
     cnx.close()
     for x in range(numberOfPlayersPerRound):
-        arrayOfPlayers.append(Player(4, 20, 11, 10, str(x + 1), [], 999, 999))
+        arrayOfPlayers.append(Player(3, 363, 363, 362, str(x + 1), [], 999, 999))
         insertPlayer(arrayOfPlayers[x])
 
     return arrayOfPlayers, numberOfPlayersPerRound, 0
 
 # Function that inserts new player into database
 def insertPlayer(player):
-    cnx = mysql.connector.connect(user='root', password='mysql', host='127.0.0.1', database='signal')
+    cnx = mysql.connector.connect(user='root', password='mysql', host='127.0.0.1', database='test2')
     add_player = ("INSERT INTO `players`"
                   "(timestamp, player_id, parent_one_id, parent_two_id, player_weights_1, player_weights_2, player_weights_3, player_weights_4)"
                   "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)")
