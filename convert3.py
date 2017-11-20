@@ -55,7 +55,7 @@ for byte in bytestring:
         break
     i += 1
     data.append(byte)
-
+start_length = len(data)
 match_array = []
 x = 0
 while x < len(data) - 1:
@@ -68,7 +68,8 @@ while x < len(data) - 1:
 
 print(len(match_array))
 print(len(data))
-
+print('Start length: ' + str(start_length))
+print('End length: ' + str(len(data) + (len(match_array)/8)))
 '''
 
 binary_string = ''
@@ -169,7 +170,7 @@ for x in range(int(len(data)/5)):
         prediction_flip.append(ones_flip + 2 * (len(data) + zeros_flip))
         running_new_flip.append(running_ones_flip + running_zeros_flip + running_delim_flip)
 
-'''
+
 score = []
 axis = []
 normal = []
@@ -180,12 +181,13 @@ for x in range(255):
     normal.append(8)
 
 trace_array = []
-trace_array.append(go.Scatter(x=axis, y=score, mode='lines+markers', name='score'))
-trace_array.append(go.Scatter(x=axis, y=normal, mode='lines+markers', name='score'))
+#trace_array.append(go.Scatter(x=axis, y=score, mode='lines+markers', name='score'))
+#trace_array.append(go.Scatter(x=axis, y=normal, mode='lines+markers', name='score'))
 #trace_array.append(go.Scatter(x=axis, y=score_flip, mode='lines+markers', name='scoreflip'))
 #trace_array.append(go.Scatter(x=axis, y=standard, mode='lines+markers', name='normal'))
 #trace_array.append(go.Scatter(x=axis, y=running_new, mode='lines+markers', name='new'))
 #trace_array.append(go.Scatter(x=axis, y=running_new_flip, mode='lines+markers', name='newflip'))
 #trace_array.append(go.Scatter(x=axis, y=prediction, mode='lines+markers', name='score'))
 #trace_array.append(go.Scatter(x=axis, y=prediction_flip, mode='lines+markers', name='score'))
-py.offline.plot(trace_array, filename='EraScores.html')
+#py.offline.plot(trace_array, filename='EraScores.html')
+'''
